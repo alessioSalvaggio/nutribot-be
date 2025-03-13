@@ -4,10 +4,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.endpoints import db_crud
+from app.api.endpoints import manage_patients
 import firebase_admin
 from firebase_admin import auth, credentials
-from app.api.endpoints import communications
 
 app = FastAPI(root_path="/nutribot/api")
 
@@ -50,8 +49,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(db_crud.router, prefix="/v1/db")
-app.include_router(communications.router, prefix="/v1/communications")
+app.include_router(manage_patients.router, prefix="/v1/manage")
 
 if __name__ == "__main__":
     import uvicorn

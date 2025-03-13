@@ -6,3 +6,9 @@ pydantic-settings
 pydantic[email]
 python-dotenv
 firebase_admin
+selenium
+fake_useragent
+httpagentparser
+streamlit
+pytz
+plotly

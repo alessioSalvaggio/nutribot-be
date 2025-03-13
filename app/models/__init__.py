@@ -1,2 +1,1 @@
-from app.models.users import *
-from app.models.communications import *
+from app.models.manage_patients import *

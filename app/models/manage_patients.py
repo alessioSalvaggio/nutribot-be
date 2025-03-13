@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, constr
-from typing import Optional
+from typing import Optional, Dict
 
 class NewPatientProfile(BaseModel):
     nome: str
@@ -17,3 +17,6 @@ class NewPatientProfile(BaseModel):
     lev_activity: str
     alim_pref: Optional[str] = ""
     alim_intolleranze: Optional[str] = ""
+    
+class NewMeasRequest(BaseModel):
+    patId: str
