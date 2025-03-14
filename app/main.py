@@ -4,10 +4,22 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from app.api.endpoints import manage_patients
 import firebase_admin
 from firebase_admin import auth, credentials
+from app.core.mongo_core import MongoCore
 
+mongo = MongoCore()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await mongo._connect()
+    print("Connected to MongoDB.")
+    yield
+    if mongo.client:
+        mongo.client.close()
+        print("MongoDB connection closed.")
+        
 app = FastAPI(root_path="/nutribot/api")
 
 cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")

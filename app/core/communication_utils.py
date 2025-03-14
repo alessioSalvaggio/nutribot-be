@@ -20,7 +20,7 @@ async def send_multi_email(recipients, subject, body):
     email_sending_failure_count = 0
 
     for recipient in recipients:
-        await log_to_mongo("app/core/communication_utils/send_multi_email", "INFO", f"Sending email to {recipient}")
+        await log_to_mongo("EMAIL_SERVICE", "app/core/communication_utils/send_multi_email", "INFO", f"Sending email to {recipient}")
         message = MIMEMultipart()
         message["From"] = sender_email
         message["To"] = recipient
@@ -33,9 +33,9 @@ async def send_multi_email(recipients, subject, body):
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, recipient, message.as_string())
             server.quit()
-            await log_to_mongo("app/core/communication_utils/send_multi_email", "INFO", f"Email SENT CORRECTLY to {recipient}")
+            await log_to_mongo("EMAIL_SERVICE", "app/core/communication_utils/send_multi_email", "INFO", f"Email SENT CORRECTLY to {recipient}")
         except Exception as e:
-            await log_to_mongo("app/core/communication_utils/send_multi_email", "ERROR", f"Failed to send email: {str(e)}")
+            await log_to_mongo("EMAIL_SERVICE", "app/core/communication_utils/send_multi_email", "ERROR", f"Failed to send email: {str(e)}")
             email_sending_failure_count += 1
     
     if email_sending_failure_count > 0:

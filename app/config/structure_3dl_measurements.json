@@ -1,0 +1,132 @@
+{
+    "chest": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/chest@2x.jpg",
+      "en_name": "Bust girth",
+      "it_name": "Circonferenza del busto"
+    },
+    "under_bust_girth": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/under_bust_girth@2x.jpg",
+      "en_name": "Under bust girth",
+      "it_name": "Circonferenza sotto il busto"
+    },
+    "upper_chest_girth": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/upper_chest_girth@2x.jpg",
+      "en_name": "Upper chest girth",
+      "it_name": "Circonferenza torace superiore"
+    },
+    "overarm_girth": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/overarm_girth@2x.jpg",
+      "en_name": "Overarm girth",
+      "it_name": "Circonferenza busto e braccia chiuse"
+    },
+    "waist": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/waist@2x.jpg",
+      "en_name": "Waist girth",
+      "it_name": "Circonferenza vita"
+    },
+    "high_hips": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/high_hips@2x.jpg",
+      "en_name": "Upper hip girth",
+      "it_name": "Circonferenza fianchi superiori"
+    },
+    "low_hips": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/low_hips@2x.jpg",
+      "en_name": "Hip girth",
+      "it_name": "Circonferenza fianchi"
+    },
+    "waist_green": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/waist_green@2x.jpg",
+      "en_name": "Middle waist",
+      "it_name": "Vita media"
+    },
+    "waist_gray": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/waist_gray@2x.jpg",
+      "en_name": "Lower waist",
+      "it_name": "Vita bassa"
+    },
+    "pant_waist": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/pant_waist@2x.jpg",
+      "en_name": "Pant waist",
+      "it_name": "Vita pantaloni"
+    },
+    "bicep": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/bicep@2x.jpg",
+      "en_name": "Upper-arm girth",
+      "it_name": "Circonferenza parte superiore del braccio"
+    },
+    "upper_bicep_girth": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/upper_bicep_girth@2x.jpg",
+      "en_name": "Upper bicep girth",
+      "it_name": "Circonferenza bicipite superiore"
+    },
+    "knee": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/knee_girth@2x.jpg",
+      "en_name": "Knee girth",
+      "it_name": "Circonferenza ginocchio"
+    },
+    "ankle": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/ankle@2x.jpg",
+      "en_name": "Ankle girth",
+      "it_name": "Circonferenza caviglia"
+    },
+    "wrist": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/wrist@2x.jpg",
+      "en_name": "Wrist girth",
+      "it_name": "Circonferenza polso"
+    },
+    "calf": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/calf@2x.jpg",
+      "en_name": "Calf girth",
+      "it_name": "Circonferenza polpaccio"
+    },
+    "thigh": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/thigh@2x.jpg",
+      "en_name": "Thigh girth",
+      "it_name": "Circonferenza coscia"
+    },
+    "thigh_1_inch_below_crotch": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/thigh_1_inch_below_crotch@2x.jpg",
+      "en_name": "Thigh 1 inch below the crotch",
+      "it_name": "Coscia 1 pollice sotto il cavallo"
+    },
+    "mid_thigh_girth": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/mid_thigh_girth@2x.jpg",
+      "en_name": "Mid-thigh girth",
+      "it_name": "Circonferenza metà coscia"
+    },
+    "neck": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/neck@2x.jpg",
+      "en_name": "Neck base girth",
+      "it_name": "Circonferenza base del collo"
+    },
+    "abdomen": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/abdomen@2x.jpg",
+      "en_name": "Abdomen girth",
+      "it_name": "Circonferenza addome"
+    },
+    "armscye_girth": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/armscye_girth@2x.jpg",
+      "en_name": "Armscye girth",
+      "it_name": "Circonferenza giromanica"
+    },
+    "neck_girth": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/neck_girth@2x.jpg",
+      "en_name": "Neck girth",
+      "it_name": "Circonferenza collo"
+    },
+    "neck_girth_relaxed": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/neck_girth@2x.jpg",
+      "en_name": "Neck girth relaxed",
+      "it_name": "Circonferenza collo rilassato"
+    },
+    "forearm": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/forearm@2x.jpg",
+      "en_name": "Forearm girth flexed",
+      "it_name": "Circonferenza avambraccio flesso"
+    },
+    "elbow_girth": {
+      "link": "https://mtm.3dlook.me/assets/images-for-guide/men/volume/elbow_girth@2x.jpg",
+      "en_name": "Elbow girth",
+      "it_name": "Circonferenza gomito"
+    }
+  }
