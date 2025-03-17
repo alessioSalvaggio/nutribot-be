@@ -1,6 +1,8 @@
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from dotenv import load_dotenv 
+load_dotenv(dotenv_path="/home/alessio/nutribot/.env")
 
 from datetime import datetime, timedelta
 from app.core.mongo_core import mongo_delete_many

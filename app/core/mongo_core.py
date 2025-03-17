@@ -1,12 +1,8 @@
 # app/core/mongo_core.py
 import os
-import logging
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import PyMongoError
 from asyncio import Lock
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 class MongoCore:
     _instance = None
@@ -34,10 +30,10 @@ class MongoCore:
                         mongo_uri = f"mongodb://{mongo_host}:{mongo_port}"
                         self.client = AsyncIOMotorClient(mongo_uri)
                         self.db = self.client[mongo_db]
-                        logger.info("Connected to MongoDB.")
+                        print("Connected to MongoDB.")
 
                     except (ValueError, PyMongoError) as e:
-                        logger.error(f"MongoDB connection error: {e}")
+                        print(f"MongoDB connection error: {e}")
 
     async def get_database(self):
         if self.client is None:

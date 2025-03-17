@@ -63,13 +63,20 @@ if len(df) > 0:
         df['time_group'] = df['ts'].dt.floor('T')
     
     df_grouped = df.groupby(['time_group', 'level']).size().reset_index(name='count')
+    color_map = {
+        "INFO": "#1f77b4",
+        "DEBUG": "green",
+        "WARNING": "yellow",
+        "ERROR": "red"
+    }
     fig = px.line(
         df_grouped, 
         x='time_group', 
         y='count', 
         color='level', 
         title=f'Logs per {time_granularity.lower()}',
-        markers=True
+        markers=True,
+        color_discrete_map=color_map  
     )
     st.plotly_chart(fig)
     

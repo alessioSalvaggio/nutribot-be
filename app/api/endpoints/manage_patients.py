@@ -126,7 +126,6 @@ async def get_patient_measurements(patientId: str, request: Request):
                         "completed": True
                     }
                 )
-        await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patient_measurements", "INFO", f"Retrieved measurements for patient {patientId}")
         return measurements
     except Exception as e:
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patient_measurements", "ERROR", f"Failed to retrieve measurements for patient {patientId}: {str(e)}")
