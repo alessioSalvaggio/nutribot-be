@@ -7,7 +7,7 @@ from app.core.mongo_logging import log_to_mongo
 import os
 from bson import ObjectId
 import json
-from datetime import datetime
+from datetime import datetime, date
 
 RETURN_HOME_URL_3DLOOK_WIDGET = os.getenv("RETURN_HOME_URL_3DLOOK_WIDGET")
 with open(os.getenv("LOOK3D_MEASUREMENTS_STRUCTURE"), "r") as f:
@@ -15,13 +15,21 @@ with open(os.getenv("LOOK3D_MEASUREMENTS_STRUCTURE"), "r") as f:
 
 router = APIRouter()
 
+def serialize_document(doc):
+    for key, value in doc.items():
+        if isinstance(value, dict):
+            doc[key] = serialize_document(value)  # Ricorsione per i dizionari annidati
+        elif isinstance(value, date):
+            doc[key] = value.isoformat()  # Converti la data in stringa
+    return doc
+
 @router.post("/add_new_patient")
 async def save_item(patient_profile: NewPatientProfile, request: Request):
     try:
         patient_profile = patient_profile.model_dump()
         patient_profile['misurazioni'] = {}
         patient_profile['nutrizionista'] = request.state.user_id
-        result = await mongo_insert_one("patients", patient_profile)
+        result = await mongo_insert_one("patients", serialize_document(patient_profile))
         if result.inserted_id:
             await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/save_item", "INFO", f"New patient {result.inserted_id} added by nutrizionista {request.state.user_id}")
             return {"message": "Item saved successfully", "id": str(result.inserted_id)}
