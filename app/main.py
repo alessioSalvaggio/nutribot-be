@@ -12,6 +12,12 @@ from firebase_admin import auth, credentials
 from app.core.mongo_core import MongoCore
 from app.core.mongo_logging import log_to_mongo 
 
+cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
+if not cred_path:
+    raise ValueError("FIREBASE_CREDENTIALS_PATH environment variable not set")
+cred = credentials.Certificate(cred_path)
+firebase_admin.initialize_app(cred)
+
 mongo = MongoCore()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,15 +28,50 @@ async def lifespan(app: FastAPI):
         mongo.client.close()
         print("MongoDB connection closed.")
         
-app = FastAPI(root_path="/nutribot/api")
+app = FastAPI(
+    root_path="/nutribot/api",
+    title="Nutribot API",
+    description="API per la gestione di Nutribot con autenticazione Firebase e API Key",
+    version="0.2.4"
+)
 
-cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
-if not cred_path:
-    raise ValueError("FIREBASE_CREDENTIALS_PATH environment variable not set")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Initialize Firebase Admin SDK
-cred = credentials.Certificate(cred_path)
-firebase_admin.initialize_app(cred)
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    try:
+        if request.url.path.startswith("/docs") or request.url.path.startswith("/openapi.json"):
+            return await call_next(request)
+        
+        jwt_token = request.headers.get("Authorization")
+        if jwt_token:
+            if jwt_token == os.getenv("OVERRIDE_API_AUTH_TOKEN"):
+                request.state.user_id = "DEV_USER"
+                return await call_next(request)
+            else:
+                try:
+                    decoded_token = auth.verify_id_token(jwt_token)
+                    request.state.user_id = decoded_token["uid"]
+                except Exception as e:
+                    raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+        else:
+            raise HTTPException(status_code=401, detail="Authorization header missing")
+
+        return await call_next(request)
+    except HTTPException as e:
+        await log_to_mongo(
+            f"MIDDLEWARE - {request.state.user_id if hasattr(request.state, "user_id") else "UNAUTH_USER"}", 
+            "app/main/auth_middleware", 
+            "ERROR", 
+            f"{e}"
+        )
+        raise e
 
 def convert_bytes_to_strings(d):
     if isinstance(d, dict):
@@ -87,43 +128,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
     
     return exc
-
-@app.middleware("http")
-async def auth_middleware(request: Request, call_next):
-    try:
-        if request.url.path.startswith("/docs") or request.url.path.startswith("/openapi.json"):
-            return await call_next(request)
-        
-        jwt_token = request.headers.get("Authorization")
-        if jwt_token:
-            if jwt_token == os.getenv("OVERRIDE_API_AUTH_TOKEN"):
-                request.state.user_id = "DEV_USER"
-                return await call_next(request)
-            else:
-                try:
-                    decoded_token = auth.verify_id_token(jwt_token)
-                    request.state.user_id = decoded_token["uid"]
-                except Exception as e:
-                    raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-        else:
-            raise HTTPException(status_code=401, detail="Authorization header missing")
-
-        return await call_next(request)
-    except HTTPException as e:
-        await log_to_mongo(
-        "MIDDLEWARE", 
-        "app/main/auth_middleware", 
-        "ERROR", 
-        f"{e}"
-    )
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 app.include_router(manage_patients.router, prefix="/v1/manage")
 
