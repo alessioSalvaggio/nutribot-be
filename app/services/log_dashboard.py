@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import plotly.express as px
 from datetime import datetime, timedelta
+import ast
 
 st.set_page_config(layout="wide")
 
@@ -14,6 +15,7 @@ db = client[os.getenv("MONGO_DB")]
 
 # Recupera i log da MongoDB
 logs = db["logs"].find().sort("ts", -1).to_list(length=None)  # Ordina per timestamp decrescente
+n_logs = len(logs)
 
 # Streamlit dashboard
 st.title("Log Dashboard")
@@ -24,6 +26,10 @@ selected_level = st.sidebar.selectbox("Seleziona il livello di log", log_levels)
 
 # Filtro per granularità del tempo
 time_granularity = st.sidebar.selectbox("Seleziona la granularità del tempo", ["Day", "Hour", "Minute"])
+
+# Filtro per function
+sorted_functions = sorted({k['function'] for k in logs})
+selected_functions = st.sidebar.multiselect("Seleziona le funzioni:", sorted_functions)
 
 # Filtro per intervallo di date
 today = datetime.today()
@@ -37,21 +43,28 @@ end_time = col2.time_input("Ora di fine", value=datetime.max.time())
 # Combina data e ora
 start_datetime = datetime.combine(start_date, start_time)
 end_datetime = datetime.combine(end_date, end_time)
+
 # Free search text
 search_text = st.sidebar.text_input("Cerca testo nei log")
+
+# display the log number
+st.sidebar.write(f"Numer of logs: {n_logs}")
  
 # Converti i log filtrati in un DataFrame
 df = pd.DataFrame(logs)
 df.index = df['_id']
 df['ts'] = pd.to_datetime(df['ts'])
 
-# Filtra i log per livello e intervallo di date e tempo
+# Filtra i log secodno i filtri precedenti
 if selected_level != "ALL":
     df = df[df['level'] == selected_level]
 df = df[(df['ts'] >= start_datetime) & (df['ts'] <= end_datetime)]
 if search_text != "":
     df_idx = df.applymap(lambda cell: isinstance(cell, str) and search_text.lower() in cell.lower()).sum(axis=1)
     df = df[df_idx > 0]
+if len(selected_functions) > 0:
+    df = df[df["function"].isin(selected_functions)]
+
 
 if len(df) > 0:
     # Raggruppa i log in base alla granularità del tempo selezionata
@@ -87,6 +100,10 @@ if len(df) > 0:
     selected_log_index = st.selectbox("Seleziona un log per visualizzare i dettagli", df.index)
     if selected_log_index is not None:
         selected_log = [l for l in logs if l['_id'] == selected_log_index][0]
+        try:
+            selected_log['content'] = ast.literal_eval(selected_log['content'])
+        except:
+            pass
         st.write("Dettagli del log selezionato:")
         st.json(selected_log)
 else:

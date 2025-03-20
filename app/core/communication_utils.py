@@ -20,7 +20,6 @@ async def send_multi_email(recipients, subject, body):
     email_sending_failure_count = 0
 
     for recipient in recipients:
-        await log_to_mongo("EMAIL_SERVICE", "app/core/communication_utils/send_multi_email", "INFO", f"Sending email to {recipient}")
         message = MIMEMultipart()
         message["From"] = sender_email
         message["To"] = recipient

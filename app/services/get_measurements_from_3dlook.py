@@ -29,7 +29,7 @@ async def check_and_get_pending_measures():
                 )
             
             if 'status' in result['state'] and result['state']['status'] == 'finished':
-                completed_measurements[m["UUID"]] = m["patientId"]
+                completed_measurements[m["UUID"]] = {"patient": m["patientId"]}
                 await mongo_update_one("measurements", {"_id": m["_id"]},{"$set": {"result": result}})
                 await mongo_update_one('patients', {"_id": ObjectId(m["patientId"])},
                     {
@@ -41,19 +41,17 @@ async def check_and_get_pending_measures():
                         }
                     })
             else:
-                pending_measurements[m["UUID"]] = m["patientId"]
+                pending_measurements[m["UUID"]] = {"patient": m["patientId"]}
             
+        log_content = {
+            f"{len(completed_measurements)} COMPLETED MEASUREMENTS": completed_measurements,
+            f"{len(pending_measurements)} PENDING MEASUREMENTS": pending_measurements
+        }
         await log_to_mongo(
             "3DLOOK_GET_MEASUREMENTS_JOB", 
             "app/services/get_measurements_from_3dlook/check_and_get_pending_measures", 
             "INFO", 
-            f"COMPLETED MEASUREMENTS {completed_measurements}"
-        )
-        await log_to_mongo(
-            "3DLOOK_GET_MEASUREMENTS_JOB", 
-            "app/services/get_measurements_from_3dlook/check_and_get_pending_measures", 
-            "INFO", 
-            f"PENDING MEASUREMENTS {pending_measurements}"
+            f"{log_content}"
         )
     except Exception as e:
         await log_to_mongo(
