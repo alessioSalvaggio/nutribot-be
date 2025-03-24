@@ -10,16 +10,12 @@ class PersonalInfo(BaseModel):
     nome: str
     cognome: str
     dob: date = Field(..., description="Data di nascita")
-    eta: Optional[int] = Field(None, description="Età calcolata automaticamente")
     indirizzo: Optional[str] = ""
     professione: Optional[str] = ""
     email: EmailStr
     phone: str = Field(..., description="Numero di telefono")
     codice_fiscale: Optional[str] = ""
     come_conosciuto: Optional[str] = Field(None, description="Come hai conosciuto lo studio")
-
-# Motivo della visita
-class VisitReason(BaseModel):
     motivo_visita: str
 
 # Storia ponderale
@@ -101,7 +97,6 @@ class SmokingSleepStress(BaseModel):
 
 class NewPatientProfile(BaseModel):
     personal_info: PersonalInfo
-    visit_reason: VisitReason
     weight_history: WeightHistory
     diet_history: DietHistory
     lifestyle: Lifestyle

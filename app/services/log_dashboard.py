@@ -8,6 +8,23 @@ import ast
 
 st.set_page_config(layout="wide")
 
+# Authentication
+def authenticate():
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    if not st.session_state.authenticated:
+        col1, col2 = st.sidebar.columns(2)
+        username = col1.text_input("Username")
+        password = col2.text_input("Password", type="password")
+        if username == os.getenv("LOG_DASHBOARD_USER") and password == os.getenv("LOG_DASHBOARD_PASS"):
+            st.session_state.authenticated = True
+        else:
+            st.sidebar.error("Invalid username or password")
+            st.stop()
+
+authenticate()
+
 # Configurazione MongoDB
 mongo_conn_string = f"mongodb://{os.getenv('MONGO_HOST')}:{os.getenv('MONGO_PORT')}"
 client = MongoClient(mongo_conn_string)
@@ -18,7 +35,26 @@ logs = db["logs"].find().sort("ts", -1).to_list(length=None)  # Ordina per times
 n_logs = len(logs)
 
 # Streamlit dashboard
-st.title("Log Dashboard")
+col1, col2 = st.columns(2)
+with col1:
+    st.title("Log Dashboard")
+with col2:
+    # Add a refresh button
+    st.markdown(
+        """
+        <style>
+        .stButton > button {
+            float: right;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    if st.button("Aggiorna dati"):
+        # Reload logs from MongoDB
+        logs = db["logs"].find().sort("ts", -1).to_list(length=None)  # Ordina per timestamp decrescente
+        n_logs = len(logs)
+        st.sidebar.success("Dati aggiornati!")
 
 # Filtro per livello di log
 log_levels = ["ALL", "INFO", "WARNING", "ERROR", "DEBUG"]
@@ -48,7 +84,7 @@ end_datetime = datetime.combine(end_date, end_time)
 search_text = st.sidebar.text_input("Cerca testo nei log")
 
 # display the log number
-st.sidebar.write(f"Numer of logs: {n_logs}")
+st.sidebar.write(f"Total Number of logs: {n_logs}")
  
 # Converti i log filtrati in un DataFrame
 df = pd.DataFrame(logs)
@@ -64,7 +100,9 @@ if search_text != "":
     df = df[df_idx > 0]
 if len(selected_functions) > 0:
     df = df[df["function"].isin(selected_functions)]
-
+    
+# display filtered log number
+st.sidebar.write(f"Filtered Number of logs: {df.shape[0]}")
 
 if len(df) > 0:
     # Raggruppa i log in base alla granularità del tempo selezionata
@@ -107,4 +145,4 @@ if len(df) > 0:
         st.write("Dettagli del log selezionato:")
         st.json(selected_log)
 else:
-    st.write(f"Nessun log di {selected_level} disponibile")
+    st.write(f"Nessun log disponibile coi filtri selezionati")

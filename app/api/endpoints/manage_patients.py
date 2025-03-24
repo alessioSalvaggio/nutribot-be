@@ -44,7 +44,11 @@ async def save_item(patient_profile: NewPatientProfile, request: Request):
 async def get_patients(request: Request):
     try:
         nutrizionista_id = request.state.user_id
-        patients_cursor = await mongo_find_many("patients", {"nutrizionista": nutrizionista_id})
+        # Add filter to exclude documents where "deleted" is true
+        patients_cursor = await mongo_find_many(
+            "patients", 
+            {"nutrizionista": nutrizionista_id, "$or": [{"deleted": {"$exists": False}}, {"deleted": False}]}
+        )
         patients = await patients_cursor.to_list(length=None)
         for p in patients:
             p['_id'] = str(p['_id'])
@@ -103,38 +107,50 @@ async def request_new_measurement(new_measurement_request: NewMeasRequest, reque
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/request_new_measurement", "ERROR", f"Failed to request new measurement for patient {new_measurement_request.patId}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to request new measurement")
 
-@router.get("/get_patient_measurements")
-async def get_patient_measurements(patientId: str, request: Request):
+@router.get("/single_patient/{patientId}")
+async def get_patient_info(patientId: str, request: Request):
     try:
         patient_details = await mongo_find_one('patients', {"_id": ObjectId(patientId)})
         if not patient_details:
-            await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patient_measurements", "ERROR", f"Patient {patientId} not found")
+            await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patient_info", "ERROR", f"Patient {patientId} not found")
             raise HTTPException(status_code=404, detail="Patient not found")
-        
-        measurements = []
-        for uuid, measurement in patient_details.get('misurazioni', {}).items():
-            if measurement == {}:
-                measurements.append(
-                    {
-                        "UUID": uuid,
-                        "completed": False
-                    }
-                )
-            else:
-                measurements.append(
-                    {
-                        "UUID": uuid,
-                        "data": datetime.strptime(measurement.get('data', None), "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%d/%m/%Y") if measurement.get('data', None) else None,
-                        "valori": [
-                            {
-                                "misura": structure_3dl_measurements[k]['it_name'], 
-                                "valore": v
-                            } for k, v in measurement.get('valori', {}).items()
-                        ],
-                        "completed": True
-                    }
-                )
-        return measurements
+        patient_details['_id'] = str(patient_details['_id'])
+        return patient_details
     except Exception as e:
-        await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patient_measurements", "ERROR", f"Failed to retrieve measurements for patient {patientId}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve measurements")
+        await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patient_info", "ERROR", f"Failed to retrieve information for patient {patientId}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve patient information")
+    
+@router.put("/update_patient/{patientId}")
+async def update_patient_info(patientId: str, updated_profile: NewPatientProfile, request: Request):
+    try:
+        updated_data = updated_profile.model_dump()
+        result = await mongo_update_one(
+            "patients",
+            {"_id": ObjectId(patientId)},
+            {"$set": serialize_document(updated_data)}
+        )
+        if result.modified_count == 1:
+            return {"message": "Patient updated successfully"}
+        else:
+            await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/update_patient_info", "ERROR", f"Failed to update patient {patientId} by nutrizionista {request.state.user_id}")
+            raise HTTPException(status_code=404, detail="Patient not found or no changes made")
+    except Exception as e:
+        await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/update_patient_info", "ERROR", f"Exception occurred while updating patient {patientId} by nutrizionista {request.state.user_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update patient")
+
+@router.delete("/delete_patient/{patientId}")
+async def delete_patient(patientId: str, request: Request):
+    try:
+        result = await mongo_update_one(
+            "patients",
+            {"_id": ObjectId(patientId)},
+            {"$set": {"deleted": True}}  # Soft delete by marking as deleted
+        )
+        if result.modified_count == 1:
+            return {"message": "Patient deleted successfully"}
+        else:
+            await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/delete_patient", "ERROR", f"Failed to delete patient {patientId} by nutrizionista {request.state.user_id}")
+            raise HTTPException(status_code=404, detail="Patient not found")
+    except Exception as e:
+        await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/delete_patient", "ERROR", f"Exception occurred while deleting patient {patientId} by nutrizionista {request.state.user_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete patient")
