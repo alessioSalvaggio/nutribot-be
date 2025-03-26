@@ -17,6 +17,7 @@ class PersonalInfo(BaseModel):
     codice_fiscale: Optional[str] = ""
     come_conosciuto: Optional[str] = Field(None, description="Come hai conosciuto lo studio")
     motivo_visita: str
+    gender: str
 
 # Storia ponderale
 class WeightHistory(BaseModel):

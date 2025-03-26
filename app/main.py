@@ -11,6 +11,7 @@ import firebase_admin
 from firebase_admin import auth, credentials
 from app.core.mongo_core import MongoCore
 from app.core.mongo_logging import log_to_mongo 
+from app.config.generic_conf import DEV_PORT, DEV_USERS
 
 mongo = MongoCore()
 @asynccontextmanager
@@ -91,18 +92,23 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     try:
+        port = request.url.port
+        
         if request.url.path.startswith("/docs") or request.url.path.startswith("/openapi.json"):
             return await call_next(request)
-        
         jwt_token = request.headers.get("Authorization")
+         
         if jwt_token:
-            if jwt_token == os.getenv("OVERRIDE_API_AUTH_TOKEN"):
-                request.state.user_id = "DEV_USER"
+            # STANDARD AUTH FLOW
+            if port == DEV_PORT and jwt_token == os.getenv("OVERRIDE_API_AUTH_TOKEN"):
+                request.state.user_id = "OVERRIDE_USER"
                 return await call_next(request)
             else:
                 try:
                     decoded_token = auth.verify_id_token(jwt_token)
                     request.state.user_id = decoded_token["uid"]
+                    if port == DEV_PORT and not request.state.user_id in DEV_USERS:
+                        raise HTTPException(status_code=401, detail="DEV Env can be accessed only using DEV_USER jwt token")
                 except Exception as e:
                     raise HTTPException(status_code=401, detail="Invalid authentication credentials")
         else:
@@ -127,10 +133,11 @@ app.add_middleware(
 
 app.include_router(manage_patients.router, prefix="/v1/manage")
 
+# COMMENT THIS WHEN DEV IS COMPLETED
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
         app,
         host="localhost",
-        port=8000
+        port=8001 # KEEP 8001 FOR DEV
     )

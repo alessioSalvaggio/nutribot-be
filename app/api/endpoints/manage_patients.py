@@ -50,15 +50,21 @@ async def get_patients(request: Request):
             {"nutrizionista": nutrizionista_id, "$or": [{"deleted": {"$exists": False}}, {"deleted": False}]}
         )
         patients = await patients_cursor.to_list(length=None)
+        patients_result = []
         for p in patients:
-            p['_id'] = str(p['_id'])
-            if not 'misurazioni' in p:
-                await mongo_update_one("patients", {"_id": ObjectId(p['_id'])}, {"$set": {"misurazioni": {}}})
-        for p in patients:
+            if 'personal_info' in p:
+                curr_patient_pers_info = {'_id': str(p['_id'])}
+                curr_patient_pers_info.update({k:v for k,v in p['personal_info'].items() if k!='_id'})
+                patients_result.append(curr_patient_pers_info)
+            else:
+                p['_id'] = str(p['_id'])
+                patients_result.append(p)
+                
+        for p in patients_result:
             if 'misurazioni' in p:
                 del p['misurazioni']
                 
-        return patients
+        return patients_result
     except Exception as e:
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patients", "ERROR", f"Failed to retrieve patients for nutrizionista {nutrizionista_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve patients")
