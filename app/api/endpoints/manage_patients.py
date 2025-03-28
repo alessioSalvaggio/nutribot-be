@@ -121,6 +121,7 @@ async def get_patient_info(patientId: str, request: Request):
             await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patient_info", "ERROR", f"Patient {patientId} not found")
             raise HTTPException(status_code=404, detail="Patient not found")
         patient_details['_id'] = str(patient_details['_id'])
+        patient_details["misurazioni"] = dict(sorted(patient_details["misurazioni"].items(), key=lambda x: x[1].get("data", "9999-12-31T23:59:59.999999Z"), reverse=True))
         return patient_details
     except Exception as e:
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patient_info", "ERROR", f"Failed to retrieve information for patient {patientId}: {str(e)}")
@@ -197,7 +198,9 @@ async def get_patient_measurements(patientId: str, request: Request):
             return {"message": "No measurements field for this patient"}
         
         measurements = patient_details.get("misurazioni", {})
-        return measurements
+        ordered_measurements = dict(sorted(measurements.items(), key=lambda x: x[1].get("data", "9999-12-31T23:59:59.999999Z"), reverse=True))
+        return ordered_measurements
+    
     except Exception as e:
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patient_measurements", "ERROR", f"Failed to retrieve measurements for patient {patientId}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve measurements")
