@@ -133,11 +133,11 @@ app.add_middleware(
 
 app.include_router(manage_patients.router, prefix="/v1/manage")
 
-# COMMENT THIS WHEN DEV IS COMPLETED
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        app,
-        host="localhost",
-        port=8001 # KEEP 8001 FOR DEV
-    )
+# # COMMENT THIS WHEN DEV IS COMPLETED
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(
+#         app,
+#         host="localhost",
+#         port=8001 # KEEP 8001 FOR DEV
+#     )

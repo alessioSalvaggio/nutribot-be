@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 import streamlit as st
 from pymongo import MongoClient
 import os
@@ -5,8 +9,16 @@ import pandas as pd
 import plotly.express as px
 from datetime import datetime, timedelta
 import ast
+from app.utils.security_and_crypt import check_password
 
 st.set_page_config(layout="wide")
+
+# Get Users
+mongo_conn_string = f"mongodb://{os.getenv('MONGO_HOST')}:{os.getenv('MONGO_PORT')}"
+client = MongoClient(mongo_conn_string)
+hypaz_db = client[os.getenv("MONGO_DB_COMPANY")]
+company_users_documents = hypaz_db['users'].find().to_list()
+company_users_credentials = {u['username']:u['hashed_password'] for u in company_users_documents}
 
 # Authentication
 def authenticate():
@@ -17,7 +29,7 @@ def authenticate():
         col1, col2 = st.sidebar.columns(2)
         username = col1.text_input("Username")
         password = col2.text_input("Password", type="password")
-        if username == os.getenv("LOG_DASHBOARD_USER") and password == os.getenv("LOG_DASHBOARD_PASS"):
+        if username in company_users_credentials and check_password(password, company_users_credentials[username]):
             st.session_state.authenticated = True
         else:
             st.sidebar.error("Invalid username or password")
@@ -25,9 +37,7 @@ def authenticate():
 
 authenticate()
 
-# Configurazione MongoDB
-mongo_conn_string = f"mongodb://{os.getenv('MONGO_HOST')}:{os.getenv('MONGO_PORT')}"
-client = MongoClient(mongo_conn_string)
+# Configurazione MongoDB per logs
 db = client[os.getenv("MONGO_DB")]
 
 # Recupera i log da MongoDB

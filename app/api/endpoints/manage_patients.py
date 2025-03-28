@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request
 from app.core.mongo_core import mongo_insert_one, mongo_find_one, mongo_find_many, mongo_update_one
-from app.models import NewPatientProfile, NewMeasRequest
+from app.models import NewPatientProfile
 from app.core.communication_utils import send_multi_email
 from app.utils.connector_3d_look import generate_new_measurement_widget
 from app.core.mongo_logging import log_to_mongo
@@ -69,12 +69,12 @@ async def get_patients(request: Request):
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patients", "ERROR", f"Failed to retrieve patients for nutrizionista {nutrizionista_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve patients")
 
-@router.post("/request_new_measurement")
-async def request_new_measurement(new_measurement_request: NewMeasRequest, request: Request):
+@router.get("/request_new_measurement/{patientId}")
+async def request_new_measurement(patientId: str, request: Request):
     try:
-        patient_details = await mongo_find_one("patients", {"_id": ObjectId(new_measurement_request.patId)})
+        patient_details = await mongo_find_one("patients", {"_id": ObjectId(patientId)})
         if sum([v=={} for k,v in patient_details['misurazioni'].items()]) > 0:
-            await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/request_new_measurement", "WARNING", f"Measurement already pending for patient {new_measurement_request.patId}")
+            await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/request_new_measurement", "WARNING", f"Measurement already pending for patient {patientId}")
             return "measurement already pending"
         
         pat_email = patient_details['email']
@@ -86,11 +86,11 @@ async def request_new_measurement(new_measurement_request: NewMeasRequest, reque
         return_url = RETURN_HOME_URL_3DLOOK_WIDGET
         
         result, UUID = generate_new_measurement_widget(pat_email, pat_first_name, pat_gender_tag, pat_gender, pat_height, pat_weight, return_url)
-        await mongo_update_one("patients", {"_id": ObjectId(new_measurement_request.patId)},{"$set": {f"misurazioni.{UUID}": {}}})
+        await mongo_update_one("patients", {"_id": ObjectId(patientId)},{"$set": {f"misurazioni.{UUID}": {}}})
         await mongo_insert_one("measurements", {
                 "UUID": UUID, 
                 "requestedOn": datetime.now(), 
-                "patientId": new_measurement_request.patId, 
+                "patientId": patientId, 
                 "nutrizionista": request.state.user_id
             })
         
@@ -107,10 +107,10 @@ async def request_new_measurement(new_measurement_request: NewMeasRequest, reque
             "Richiesta di misurazione",
             body
         )
-        await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/request_new_measurement", "INFO", f"New measurement requested for patient {new_measurement_request.patId}")
+        await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/request_new_measurement", "INFO", f"New measurement requested for patient {patientId}")
         return "success"
     except Exception as e:
-        await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/request_new_measurement", "ERROR", f"Failed to request new measurement for patient {new_measurement_request.patId}: {str(e)}")
+        await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/request_new_measurement", "ERROR", f"Failed to request new measurement for patient {patientId}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to request new measurement")
 
 @router.get("/single_patient/{patientId}")

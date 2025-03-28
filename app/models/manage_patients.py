@@ -109,6 +109,3 @@ class NewPatientProfile(BaseModel):
     medical_history: MedicalHistory
     food_preferences: FoodPreferences
     smoking_sleep_stress: SmokingSleepStress
-    
-class NewMeasRequest(BaseModel):
-    patId: str
