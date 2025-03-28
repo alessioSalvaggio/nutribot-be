@@ -4,6 +4,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.api.endpoints import manage_patients
@@ -12,6 +14,7 @@ from firebase_admin import auth, credentials
 from app.core.mongo_core import MongoCore
 from app.core.mongo_logging import log_to_mongo 
 from app.config.generic_conf import DEV_PORT, DEV_USERS
+import traceback
 
 mongo = MongoCore()
 @asynccontextmanager
@@ -47,47 +50,49 @@ def convert_bytes_to_strings(d):
         # If it's not bytes, return the value as it is
         return d
 
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    # Log dell'errore
-    desired_keys = ['base_url', 'client', 'headers', 'cookies', 'method', 'path_params', 'url', '_json']
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Handles all exceptions dynamically and logs them."""
+    
+    error_type = type(exc).__name__
+    status_code = 500
+    detail = "An unexpected error occurred"
+    
+    if isinstance(exc, RequestValidationError):
+        status_code = 422
+        detail = exc.errors()
+    elif isinstance(exc, StarletteHTTPException):
+        status_code = exc.status_code
+        detail = exc.detail
+
+    # Collect request metadata dynamically
     request_metadata = {
-        k: getattr(request, k)() if callable(getattr(request, k)) else getattr(request, k)
-        for k in desired_keys
-        if hasattr(request, k)
+        "method": request.method,
+        "url": str(request.url),
+        "headers": dict(request.headers),
+        "client": request.client.host if request.client else "unknown",
     }
-    
-    request_metadata = convert_bytes_to_strings(request_metadata)
-    
-    request_metadata['base_url'] = {
-        k:getattr(request_metadata['base_url'], k) for k in [
-            'fragment', 'hostname', 'is_secure', 'netloc', 'password', 'path', 'port', 'query', 'scheme', 'username'
-        ]
-    }
-    request_metadata['client'] = {
-        k:getattr(request_metadata['client'], k) for k in [
-            'host', 'port'
-        ]
-    }
-    request_metadata['url'] = {
-        k:getattr(request_metadata['url'], k) for k in [
-            'fragment', 'hostname', 'is_secure', 'netloc', 'password', 'path', 'port', 'query', 'scheme', 'username'
-        ]
-    }
-    request_metadata['headers'] = [[k.decode('utf-8', errors='ignore') for k in l] for l in request_metadata['headers'].raw]
-    
-    content = {
+
+    error_log = {
+        "error_type": error_type,
+        "status_code": status_code,
+        "detail": detail,
+        "traceback": traceback.format_exc(),
         "request": request_metadata,
-        "error_details": exc.errors()
     }
+
+    # Log the error
     await log_to_mongo(
-        "API_RESPONSE_ERROR_MONITOR", 
-        "app/main/validation_exception_handler", 
+        "API_ERROR_HANDLER", 
+        "app/main/global_exception_handler", 
         "ERROR", 
-        f"{content}"
+        str(error_log)
     )
-    
-    return exc
+
+    return JSONResponse(
+        status_code=status_code,
+        content={"error": error_type, "detail": detail},
+    )
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
@@ -115,13 +120,8 @@ async def auth_middleware(request: Request, call_next):
             raise HTTPException(status_code=401, detail="Authorization header missing")
 
         return await call_next(request)
-    except HTTPException as e:
-        await log_to_mongo(
-        "MIDDLEWARE", 
-        "app/main/auth_middleware", 
-        "ERROR", 
-        f"{e}"
-    )
+    except Exception as e:
+        raise e
 
 app.add_middleware(
     CORSMiddleware,
@@ -139,5 +139,5 @@ app.include_router(manage_patients.router, prefix="/v1/manage")
 #     uvicorn.run(
 #         app,
 #         host="localhost",
-#         port=8001 # KEEP 8001 FOR DEV
+#         port=8000 # KEEP 8001 FOR DEV
 #     )

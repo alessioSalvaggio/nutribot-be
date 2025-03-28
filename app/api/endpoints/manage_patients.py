@@ -77,12 +77,12 @@ async def request_new_measurement(patientId: str, request: Request):
             await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/request_new_measurement", "WARNING", f"Measurement already pending for patient {patientId}")
             return "measurement already pending"
         
-        pat_email = patient_details['email']
-        pat_first_name = patient_details['nome'] + " " + patient_details['cognome'] 
-        pat_gender_tag = "GENDER_PAGE_MALE_GENDER_SELECTED" if patient_details['genere'].lower() == "maschio" else "GENDER_PAGE_FEMALE_GENDER_SELECTED"
-        pat_gender = "male" if patient_details['genere'].lower() == "maschio" else "female"
-        pat_height = patient_details['altezza']
-        pat_weight = patient_details['peso']
+        pat_email = patient_details['personal_info']['email']
+        pat_first_name = patient_details['personal_info']['nome'] + " " + patient_details['personal_info']['cognome'] 
+        pat_gender_tag = "GENDER_PAGE_MALE_GENDER_SELECTED" if patient_details['personal_info']['gender'].lower() == "maschio" else "GENDER_PAGE_FEMALE_GENDER_SELECTED"
+        pat_gender = "male" if patient_details['personal_info']['gender'].lower() == "maschio" else "female"
+        pat_height = patient_details['personal_info']['altezza']
+        pat_weight = patient_details['weight_history']['peso_attuale']
         return_url = RETURN_HOME_URL_3DLOOK_WIDGET
         
         result, UUID = generate_new_measurement_widget(pat_email, pat_first_name, pat_gender_tag, pat_gender, pat_height, pat_weight, return_url)
@@ -160,3 +160,47 @@ async def delete_patient(patientId: str, request: Request):
     except Exception as e:
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/delete_patient", "ERROR", f"Exception occurred while deleting patient {patientId} by nutrizionista {request.state.user_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to delete patient")
+    
+@router.get("/single_measurement/{measureUUId}")
+async def get_single_measurement(measureUUId: str, request: Request):
+    try:
+        measurement_details = await mongo_find_one("measurements", {"UUID": measureUUId})
+        if not measurement_details:
+            await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_single_measurement", "ERROR", f"Measurement {measureUUId} not found")
+            raise HTTPException(status_code=404, detail="Measurement not found")
+        measurement_details_result = {
+            "_id": str(measurement_details['_id']),
+            "UUID": measurement_details["UUID"],
+            "patientId": measurement_details["patientId"],
+            "nutrizionista": measurement_details["nutrizionista"],
+            "gender": measurement_details["result"]["state"]["gender"],
+            "height": measurement_details["result"]["state"]["height"],
+            "weight": measurement_details["result"]["state"]["weight"],
+            "date": measurement_details["result"]["updated"],
+            "volume_params": measurement_details["result"]["state"]["measurements"]["volume_params"]
+        }
+        return measurement_details_result
+    except Exception as e:
+        await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_single_measurement", "ERROR", f"Failed to retrieve measurement {measureUUId}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve measurement")
+    
+@router.get("/patients/{patientId}/measurements")
+async def get_patient_measurements(patientId: str, request: Request):
+    try:
+        patient_details = await mongo_find_one("patients", {"_id": ObjectId(patientId)})
+        if not patient_details:
+            await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patient_measurements", "ERROR", f"Patient {patientId} not found")
+            raise HTTPException(status_code=404, detail="Patient not found")
+        
+        if "misurazioni" not in patient_details:
+            await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patient_measurements", "ERROR", f"No measurements field in patient {patientId}")
+            return {"message": "No measurements field for this patient"}
+        
+        measurements = patient_details.get("misurazioni", {})
+        return measurements
+    except Exception as e:
+        await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patient_measurements", "ERROR", f"Failed to retrieve measurements for patient {patientId}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve measurements")
+    
+    
+    

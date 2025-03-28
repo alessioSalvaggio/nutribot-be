@@ -18,6 +18,7 @@ class PersonalInfo(BaseModel):
     come_conosciuto: Optional[str] = Field(None, description="Come hai conosciuto lo studio")
     motivo_visita: str
     gender: str
+    altezza: float
 
 # Storia ponderale
 class WeightHistory(BaseModel):
