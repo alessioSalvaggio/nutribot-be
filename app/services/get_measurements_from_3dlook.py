@@ -42,17 +42,18 @@ async def check_and_get_pending_measures():
                     })
             else:
                 pending_measurements[m["UUID"]] = {"patient": m["patientId"]}
-            
-        log_content = {
-            f"{len(completed_measurements)} COMPLETED MEASUREMENTS": completed_measurements,
-            f"{len(pending_measurements)} PENDING MEASUREMENTS": pending_measurements
-        }
-        await log_to_mongo(
-            "3DLOOK_GET_MEASUREMENTS_JOB", 
-            "app/services/get_measurements_from_3dlook/check_and_get_pending_measures", 
-            "INFO", 
-            f"{log_content}"
-        )
+        
+        if len(completed_measurements) > 0:
+            log_content = {
+                f"{len(completed_measurements)} COMPLETED MEASUREMENTS": completed_measurements,
+                f"{len(pending_measurements)} PENDING MEASUREMENTS": pending_measurements
+            }
+            await log_to_mongo(
+                "3DLOOK_GET_MEASUREMENTS_JOB", 
+                "app/services/get_measurements_from_3dlook/check_and_get_pending_measures", 
+                "INFO", 
+                f"{log_content}"
+            )
     except Exception as e:
         await log_to_mongo(
             "3DLOOK_GET_MEASUREMENTS_JOB", 

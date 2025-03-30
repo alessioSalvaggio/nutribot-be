@@ -166,6 +166,14 @@ async def delete_patient(patientId: str, request: Request):
 async def get_single_measurement(measureUUId: str, request: Request):
     try:
         measurement_details = await mongo_find_one("measurements", {"UUID": measureUUId})
+        if "gender" in measurement_details["result"]["state"]:
+            gender = measurement_details["result"]["state"]["gender"]
+            height = measurement_details["result"]["state"]["height"]
+            weight = measurement_details["result"]["state"]["weight"]
+        else:
+            gender = measurement_details["result"]["state"]["measurements"]["gender"]
+            height = measurement_details["result"]["state"]["measurements"]["height"]
+            weight = measurement_details["result"]["state"]["measurements"]["weight"]
         if not measurement_details:
             await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_single_measurement", "ERROR", f"Measurement {measureUUId} not found")
             raise HTTPException(status_code=404, detail="Measurement not found")
@@ -174,9 +182,9 @@ async def get_single_measurement(measureUUId: str, request: Request):
             "UUID": measurement_details["UUID"],
             "patientId": measurement_details["patientId"],
             "nutrizionista": measurement_details["nutrizionista"],
-            "gender": measurement_details["result"]["state"]["gender"],
-            "height": measurement_details["result"]["state"]["height"],
-            "weight": measurement_details["result"]["state"]["weight"],
+            "gender": gender,
+            "height": height,
+            "weight": weight,
             "date": measurement_details["result"]["updated"],
             "volume_params": measurement_details["result"]["state"]["measurements"]["volume_params"]
         }

@@ -139,5 +139,5 @@ app.include_router(manage_patients.router, prefix="/v1/manage")
 #     uvicorn.run(
 #         app,
 #         host="localhost",
-#         port=8000 # KEEP 8001 FOR DEV
+#         port=8000 # KEEP 8000 FOR DEV
 #     )
