@@ -23,7 +23,7 @@ def serialize_document(doc):
             doc[key] = value.isoformat()  # Converti la data in stringa
     return doc
 
-@router.post("/add_new_patient")
+@router.post("/add_new")
 async def save_item(patient_profile: NewPatientProfile, request: Request):
     try:
         patient_profile = patient_profile.model_dump()
@@ -40,7 +40,7 @@ async def save_item(patient_profile: NewPatientProfile, request: Request):
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/save_item", "ERROR", f"Exception occurred while saving new patient by nutrizionista {request.state.user_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to save item")
 
-@router.get("/all_patients")
+@router.get("/")
 async def get_patients(request: Request):
     try:
         nutrizionista_id = request.state.user_id
@@ -69,13 +69,13 @@ async def get_patients(request: Request):
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patients", "ERROR", f"Failed to retrieve patients for nutrizionista {nutrizionista_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve patients")
 
-@router.get("/request_new_measurement/{patientId}")
+@router.get("/{patientId}/request_measurement")
 async def request_new_measurement(patientId: str, request: Request):
     try:
         patient_details = await mongo_find_one("patients", {"_id": ObjectId(patientId)})
         if sum([v=={} for k,v in patient_details['misurazioni'].items()]) > 0:
             await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/request_new_measurement", "WARNING", f"Measurement already pending for patient {patientId}")
-            return "measurement already pending"
+            raise HTTPException(status_code=500, detail="Measurement already pending")
         
         pat_email = patient_details['personal_info']['email']
         pat_first_name = patient_details['personal_info']['nome'] + " " + patient_details['personal_info']['cognome'] 
@@ -111,9 +111,9 @@ async def request_new_measurement(patientId: str, request: Request):
         return "success"
     except Exception as e:
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/request_new_measurement", "ERROR", f"Failed to request new measurement for patient {patientId}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to request new measurement")
+        raise e
 
-@router.get("/single_patient/{patientId}")
+@router.get("/{patientId}")
 async def get_patient_info(patientId: str, request: Request):
     try:
         patient_details = await mongo_find_one('patients', {"_id": ObjectId(patientId)})
@@ -127,7 +127,7 @@ async def get_patient_info(patientId: str, request: Request):
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_patient_info", "ERROR", f"Failed to retrieve information for patient {patientId}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve patient information")
     
-@router.put("/update_patient/{patientId}")
+@router.put("/{patientId}")
 async def update_patient_info(patientId: str, updated_profile: NewPatientProfile, request: Request):
     try:
         updated_data = updated_profile.model_dump()
@@ -145,7 +145,7 @@ async def update_patient_info(patientId: str, updated_profile: NewPatientProfile
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/update_patient_info", "ERROR", f"Exception occurred while updating patient {patientId} by nutrizionista {request.state.user_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to update patient")
 
-@router.delete("/delete_patient/{patientId}")
+@router.delete("/{patientId}")
 async def delete_patient(patientId: str, request: Request):
     try:
         result = await mongo_update_one(
@@ -162,38 +162,7 @@ async def delete_patient(patientId: str, request: Request):
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/delete_patient", "ERROR", f"Exception occurred while deleting patient {patientId} by nutrizionista {request.state.user_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to delete patient")
     
-@router.get("/single_measurement/{measureUUId}")
-async def get_single_measurement(measureUUId: str, request: Request):
-    try:
-        measurement_details = await mongo_find_one("measurements", {"UUID": measureUUId})
-        if "gender" in measurement_details["result"]["state"]:
-            gender = measurement_details["result"]["state"]["gender"]
-            height = measurement_details["result"]["state"]["height"]
-            weight = measurement_details["result"]["state"]["weight"]
-        else:
-            gender = measurement_details["result"]["state"]["measurements"]["gender"]
-            height = measurement_details["result"]["state"]["measurements"]["height"]
-            weight = measurement_details["result"]["state"]["measurements"]["weight"]
-        if not measurement_details:
-            await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_single_measurement", "ERROR", f"Measurement {measureUUId} not found")
-            raise HTTPException(status_code=404, detail="Measurement not found")
-        measurement_details_result = {
-            "_id": str(measurement_details['_id']),
-            "UUID": measurement_details["UUID"],
-            "patientId": measurement_details["patientId"],
-            "nutrizionista": measurement_details["nutrizionista"],
-            "gender": gender,
-            "height": height,
-            "weight": weight,
-            "date": measurement_details["result"]["updated"],
-            "volume_params": measurement_details["result"]["state"]["measurements"]["volume_params"]
-        }
-        return measurement_details_result
-    except Exception as e:
-        await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_patients/get_single_measurement", "ERROR", f"Failed to retrieve measurement {measureUUId}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve measurement")
-    
-@router.get("/patients/{patientId}/measurements")
+@router.get("/{patientId}/measurements")
 async def get_patient_measurements(patientId: str, request: Request):
     try:
         patient_details = await mongo_find_one("patients", {"_id": ObjectId(patientId)})

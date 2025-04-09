@@ -8,13 +8,19 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.api.endpoints import manage_patients
+from app.api.endpoints.manage_patients import router as patient_manager_router
+from app.api.endpoints.manage_measurements import router as measurements_manager_router
+from app.api.endpoints.manage_payments import router as payments_router
+from app.api.endpoints.webhooks import router as webhook_router
 import firebase_admin
 from firebase_admin import auth, credentials
 from app.core.mongo_core import MongoCore
 from app.core.mongo_logging import log_to_mongo 
 from app.config.generic_conf import DEV_PORT, DEV_USERS
 import traceback
+import httpx
+
+ERROR_WEBHOOK_URL = os.getenv("ERROR_WEBHOOK_URL")  # URL del webhook centralizzato
 
 mongo = MongoCore()
 @asynccontextmanager
@@ -38,21 +44,17 @@ firebase_admin.initialize_app(cred)
 
 def convert_bytes_to_strings(d):
     if isinstance(d, dict):
-        # If it's a dictionary, iterate through its keys and values
         return {key: convert_bytes_to_strings(value) for key, value in d.items()}
     elif isinstance(d, list):
-        # If it's a list, iterate through its elements
         return [convert_bytes_to_strings(item) for item in d]
     elif isinstance(d, (bytes, bytearray)):
-        # If the value is bytes or bytearray, decode it to string
         return d.decode('utf-8', errors='ignore')  # You can change 'utf-8' to another encoding if needed
     else:
-        # If it's not bytes, return the value as it is
         return d
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """Handles all exceptions dynamically and logs them."""
+    """Handles all exceptions dynamically, logs them, and triggers a webhook."""
     
     error_type = type(exc).__name__
     status_code = 500
@@ -88,6 +90,13 @@ async def global_exception_handler(request: Request, exc: Exception):
         "ERROR", 
         str(error_log)
     )
+
+    if ERROR_WEBHOOK_URL:
+        async with httpx.AsyncClient() as client:
+            try:
+                await client.post(ERROR_WEBHOOK_URL, json=error_log)
+            except Exception as webhook_exc:
+                print(f"Failed to send error to webhook: {webhook_exc}")
 
     return JSONResponse(
         status_code=status_code,
@@ -131,7 +140,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(manage_patients.router, prefix="/v1/manage")
+app.include_router(patient_manager_router, prefix="/v1/patients")
+app.include_router(measurements_manager_router, prefix="/v1/measurements")
+app.include_router(payments_router, prefix="/v1/payments")
+app.include_router(webhook_router, prefix="/v1/webhooks")
+
+print(app.routes)
+for route in app.routes:
+    print(f"Route: {route.path}, Methods: {route.methods}")
 
 # # COMMENT THIS WHEN DEV IS COMPLETED
 # if __name__ == "__main__":
@@ -139,5 +155,5 @@ app.include_router(manage_patients.router, prefix="/v1/manage")
 #     uvicorn.run(
 #         app,
 #         host="localhost",
-#         port=8000 # KEEP 8000 FOR DEV
+#         port=8001 # KEEP 8000 FOR DEV
 #     )

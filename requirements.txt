@@ -12,3 +12,5 @@ httpagentparser
 streamlit
 pytz
 plotly
+stripe
+httpx
