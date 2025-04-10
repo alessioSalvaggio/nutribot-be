@@ -22,7 +22,6 @@ async def log_to_mongo(user: str, app_function: str, level: str, message: str):
         "content": message
     }
     result = await mongo_insert_one("logs", log_entry)
-    print(log_entry)
     
 if __name__=="__main__":
     asyncio.run(log_to_mongo("DEBUG_MONGO_LOGGING", "app/send_email", "INFO", f"Sending email to someone")) 

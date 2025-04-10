@@ -30,7 +30,6 @@ class MongoCore:
                         mongo_uri = f"mongodb://{mongo_host}:{mongo_port}"
                         self.client = AsyncIOMotorClient(mongo_uri)
                         self.db = self.client[mongo_db]
-                        print("Connected to MongoDB.")
 
                     except (ValueError, PyMongoError) as e:
                         print(f"MongoDB connection error: {e}")
