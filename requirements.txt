@@ -16,3 +16,4 @@ stripe
 httpx
 openai
 fpdf
+WeasyPrint

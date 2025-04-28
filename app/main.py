@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from app.api.endpoints.manage_patients import router as patient_manager_router
 from app.api.endpoints.manage_measurements import router as measurements_manager_router
 from app.api.endpoints.manage_payments import router as payments_router
+from app.api.endpoints.manage_diets import router as diets_router
 from app.api.webhooks.webhooks import router as webhook_router
 from app.api.middleware.auth_middleware import auth_middleware
 from app.api.exception_handlers.global_exception_handler import global_exception_handler
@@ -36,6 +37,7 @@ app.include_router(patient_manager_router, prefix="/v1/patients")
 app.include_router(measurements_manager_router, prefix="/v1/measurements")
 app.include_router(payments_router, prefix="/v1/payments")
 app.include_router(webhook_router, prefix="/v1/webhooks")
+app.include_router(diets_router, prefix="/v1/diets")
 
 # COMMENT THIS WHEN DEV IS COMPLETED
 if __name__ == "__main__":
@@ -43,5 +45,5 @@ if __name__ == "__main__":
     uvicorn.run(
         app,
         host="localhost",
-        port=8001 # KEEP 8000 FOR DEV
+        port=8000 # dev 8001, prod 8000
     )

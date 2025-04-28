@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: "DejaVu Sans", sans-serif;
+      margin: 2cm;
+      background-color: #fdfdfd;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 0.5cm;
+    }
+
+    h2 {
+      margin-top: 1cm;
+      color: #34495e;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 5px;
+    }
+
+    .day-section {
+      page-break-inside: avoid;
+      margin-bottom: 1cm;
+    }
+
+    .meal {
+      margin-bottom: 10px;
+    }
+
+    .meal-title {
+      font-weight: bold;
+      color: #2980b9;
+      margin-top: 8px;
+    }
+
+    .ingredients {
+      margin: 5px 0 5px 15px;
+    }
+
+    .ingredient-item {
+      font-size: 0.95em;
+    }
+
+    .calories {
+      font-style: italic;
+      color: #7f8c8d;
+      margin-top: 2px;
+      font-size: 0.9em;
+    }
+
+    .page-break {
+      page-break-after: always;
+    }
+  </style>
+</head>
+<body>
+  <h1>Piano Dietetico Settimanale</h1>
+
+  {% for giorno, pasti in menu_settimanale.items() %}
+  <div class="day-section">
+    <h2>{{ giorno | capitalize }}</h2>
+
+    {% for tipo_pasto, info in pasti.items() %}
+    <div class="meal">
+      <div class="meal-title">{{ tipo_pasto.replace('_', ' ').capitalize() }}: {{ info.nome }}</div>
+      <ul class="ingredients">
+        {% for ingrediente in info.ingredienti %}
+        <li class="ingredient-item">{{ ingrediente.nome }} – {{ ingrediente.grammature }} ({{ ingrediente.calorie }} kcal)</li>
+        {% endfor %}
+      </ul>
+      <div class="calories">Calorie stimate: {{ info.calorie_stimate }} kcal</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</body>
+</html>

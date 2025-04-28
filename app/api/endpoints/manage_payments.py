@@ -32,9 +32,8 @@ async def get_payment_confirmation(CheckoutSessionId: str, request: Request):
         session = Session.retrieve(CheckoutSessionId)
 
         # Extract user ID and payment details from the session
-        user_id = session.metadata.get("user_id")
+        user_id = request.state.user_id
         payment_status = session.payment_status
-        name = session.metadata.get("name")
         amount_total = session.amount_total
         currency = session.currency
         
@@ -42,26 +41,37 @@ async def get_payment_confirmation(CheckoutSessionId: str, request: Request):
         # tokensUsed: number;
         # type: "monthly" | "yearly" | "token" | "free";
 
-
         # Connect to Firestore
         db = firestore.client()
         user_ref = db.collection("users").document(user_id)
         user_doc = user_ref.get()
 
-        if not user_doc.exists():
+        if not user_doc.exists:
             await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_stripe/get_payment_details", "ERROR", f"User {user_id} not found in Firestore")
             raise HTTPException(status_code=404, detail="User not found")
 
         # Update user payment data in Firestore
         payment_data = {
-            "payments.method": session.metadata.get("payment_method", "credit_card"),
-            "payments.paymentExpiring": session.metadata.get("payment_expiring"),
-            "payments.paymentDate": firestore.SERVER_TIMESTAMP if payment_status == "paid" else None,
-            "payments.measurementsAvailable": int(session.metadata.get("measurements_available", 0)),
-            "payments.measurementsUsed": 0,  # Reset measurements used on payment
+            "method": session.metadata.get("payment_method", "credit_card"),
+            "paymentExpiring": session.metadata.get("payment_expiring"),
+            "paymentDate": session.metadata.get("payment_date"),
+            "measurementsAvailable": int(session.metadata.get("measurements_available", 0)),
+            "measurementsUsed": 0,  # Reset measurements used on payment
+            "raw_body": session
         }
         user_ref.update(payment_data)
 
+        # Update mongo collection for user payment history
+        user_payment_history_ref = db.collection("users").document(user_id)
+        payment_history_doc = user_payment_history_ref.get()
+        if not payment_history_doc.exists:
+            user_payment_history_ref.set({
+                "user_id": user_id,
+                "payment_history": []
+            })
+        user_payment_history_ref.update({
+            "payment_history": firestore.ArrayUnion([payment_data])
+        })
         # Log the successful update
         await log_to_mongo(request.state.user_id, "app/api/endpoints/manage_stripe/get_payment_details", "INFO", f"Payment details updated for user {user_id}")
 
