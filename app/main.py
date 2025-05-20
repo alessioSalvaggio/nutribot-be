@@ -39,11 +39,11 @@ app.include_router(payments_router, prefix="/v1/payments")
 app.include_router(webhook_router, prefix="/v1/webhooks")
 app.include_router(diets_router, prefix="/v1/diets")
 
-# COMMENT THIS WHEN DEV IS COMPLETED
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        app,
-        host="localhost",
-        port=8000 # dev 8001, prod 8000
-    )
+# # COMMENT THIS WHEN DEV IS COMPLETED
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(
+#         app,
+#         host="localhost",
+#         port=8000 # dev 8001, prod 8000
+#     )

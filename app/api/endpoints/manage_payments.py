@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from stripe.api_resources.checkout import Session
 from app.core.mongo_logging import log_to_mongo
-from app.models.manage_payments import CreatePaymentIntentRequest
+import datetime
 from firebase_admin import firestore
 import stripe
 import os
@@ -53,9 +53,9 @@ async def get_payment_confirmation(CheckoutSessionId: str, request: Request):
         # Update user payment data in Firestore
         payment_data = {
             "method": session.metadata.get("payment_method", "credit_card"),
-            "paymentExpiring": session.metadata.get("payment_expiring"),
-            "paymentDate": session.metadata.get("payment_date"),
-            "measurementsAvailable": int(session.metadata.get("measurements_available", 0)),
+            "paymentExpiring": datetime.datetime.now() + datetime.timedelta(days=30),
+            "paymentDate": datetime.datetime.now(),
+            "measurementsAvailable": 10,
             "measurementsUsed": 0,  # Reset measurements used on payment
             "raw_body": session
         }
