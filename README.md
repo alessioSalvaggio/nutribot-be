@@ -1,64 +1,86 @@
-# FastAPI REST Server
+# Nutribot REST API
 
-This project is a RESTful API server built using FastAPI and Uvicorn. It serves as a template for creating scalable and efficient web applications.
+Nutribot è un server API RESTful sviluppato con FastAPI e Uvicorn, progettato per la gestione di dati nutrizionali, pazienti, diete e molto altro. Il progetto è pensato per essere scalabile, modulare e facilmente estendibile.
 
-## Project Structure
+## Struttura del Progetto
 
 ```
-fastapi-rest-server
+nutribot
 ├── app
-│   ├── main.py               # Entry point of the FastAPI application
-│   ├── api                   # Directory for API-related code
-│   │   ├── __init__.py       # Marks the api directory as a package
-│   │   └── endpoints         # Directory for API endpoints
-│   │       └── example.py    # Example endpoint definitions
-│   ├── core                  # Core application logic
-│   │   ├── __init__.py       # Marks the core directory as a package
-│   │   └── config.py         # Configuration settings for the application
-│   ├── models                # Data models
-│   │   └── __init__.py       # Marks the models directory as a package
-│   ├── schemas               # Data schemas for request/response validation
-│   │   └── __init__.py       # Marks the schemas directory as a package
-│   └── services              # Business logic and services
-│       └── __init__.py       # Marks the services directory as a package
-├── requirements.txt          # Project dependencies
-├── Dockerfile                # Docker configuration for the application
-├── .env                      # Environment variables
-└── README.md                 # Project documentation
+│   ├── main.py                   # Entry point dell'applicazione FastAPI
+│   ├── api
+│   │   ├── __init__.py
+│   │   └── endpoints
+│   │       ├── manage_patients.py      # Endpoint gestione pazienti
+│   │       ├── manage_measurements.py  # Endpoint gestione misurazioni
+│   │       ├── manage_payments.py      # Endpoint pagamenti
+│   │       ├── manage_diets.py         # Endpoint gestione diete
+│   │       └── ...                     # Altri endpoint
+│   ├── core
+│   │   ├── __init__.py
+│   │   ├── config.py              # Configurazioni applicative
+│   │   ├── mongo_core.py          # Wrapper per accesso a MongoDB
+│   │   └── data_accessibility.py  # Controllo accesso ai dati
+│   ├── models
+│   │   └── __init__.py
+│   ├── schemas
+│   │   └── __init__.py
+│   ├── services
+│   │   └── __init__.py
+│   └── utils
+│       ├── diet_utils.py          # Utility per generazione diete
+│       └── ...                    # Altre utility
+├── requirements.txt               # Dipendenze Python
+├── Dockerfile                     # Configurazione Docker
+├── .env                           # Variabili d'ambiente
+└── README.md                      # Documentazione progetto
 ```
 
-## Setup Instructions
+## Setup
 
-1. **Clone the repository:**
-   ```
-   git clone https://github.com/yourusername/fastapi-rest-server.git
-   cd fastapi-rest-server
+1. **Clona il repository:**
+   ```bash
+   git clone https://github.com/yourusername/nutribot.git
+   cd nutribot
    ```
 
-2. **Create a virtual environment:**
-   ```
+2. **Crea un ambiente virtuale:**
+   ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   source venv/bin/activate  # Su Windows: venv\Scripts\activate
    ```
 
-3. **Install dependencies:**
-   ```
+3. **Installa le dipendenze:**
+   ```bash
    pip install -r requirements.txt
    ```
 
-4. **Run the application:**
-   ```
+4. **Configura le variabili d'ambiente:**
+   - Crea un file `.env` e imposta le variabili richieste (es. connessione MongoDB, chiavi API, ecc).
+
+5. **Avvia l'applicazione:**
+   ```bash
    uvicorn app.main:app --reload
    ```
 
-## Usage
+## Utilizzo
 
-Once the server is running, you can access the API at `http://127.0.0.1:8000`. You can also access the interactive API documentation at `http://127.0.0.1:8000/docs`.
+- L'API sarà disponibile su `http://127.0.0.1:8000` (o sulla porta configurata).
+- La documentazione interattiva è accessibile su `http://127.0.0.1:8000/docs`.
 
-## Contributing
+## Funzionalità principali
 
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or features.
+- Gestione pazienti e dati anagrafici
+- Gestione misurazioni e progressi
+- Generazione automatica di diete personalizzate tramite AI
+- Esportazione di diete in PDF
+- Gestione pagamenti e accessi
+- Middleware di autenticazione e CORS
 
-## License
+## Contribuire
 
-This project is licensed under the MIT License. See the LICENSE file for more details.
+Contributi e segnalazioni sono benvenuti! Apri una issue o una pull request per proporre miglioramenti o nuove funzionalità.
+
+## Licenza
+
+Questo progetto è distribuito sotto licenza MIT. Consulta il file LICENSE per dettagli.

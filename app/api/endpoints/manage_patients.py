@@ -95,6 +95,7 @@ async def request_new_measurement(patientId: str, request: Request):
         await mongo_insert_one("measurements", {
                 "UUID": UUID, 
                 "requestedOn": datetime.now(), 
+                "shortLink": result['short_link'],
                 "patientId": patientId, 
                 "nutrizionista": request.state.user_id
             })

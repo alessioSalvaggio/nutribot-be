@@ -2,30 +2,22 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fastapi import FastAPI
+from app.api.core.bootstrap import init_services
+from app.api.core.init_app import custom_app_init
+from app.api.middleware.auth_middleware import auth_middleware
+from app.api.middleware.cors_middleware import add_cors_middleware
+from app.api.exception_handlers.global_exception_handler import global_exception_handler
 from app.api.endpoints.manage_patients import router as patient_manager_router
 from app.api.endpoints.manage_measurements import router as measurements_manager_router
 from app.api.endpoints.manage_payments import router as payments_router
 from app.api.endpoints.manage_diets import router as diets_router
 from app.api.webhooks.webhooks import router as webhook_router
-from app.api.middleware.auth_middleware import auth_middleware
-from app.api.exception_handlers.global_exception_handler import global_exception_handler
-from app.api.middleware.cors_middleware import add_cors_middleware
-import firebase_admin
-from firebase_admin import credentials
-from app.core.mongo_core import MongoCore
-from app.core.lifespan import lifespan
 
-# Init Variables
-mongo = MongoCore()
-cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
-if not cred_path:
-    raise ValueError("FIREBASE_CREDENTIALS_PATH environment variable not set")
-cred = credentials.Certificate(cred_path)
-firebase_admin.initialize_app(cred)
+# Init External Services
+services = init_services()
 
-# Run App
-app = FastAPI(root_path="/nutribot/api", lifespan=lifespan)
+# Initialize App
+app = custom_app_init()
 
 # Add Middleware and Exception Handlers
 app.exception_handler(Exception)(global_exception_handler)

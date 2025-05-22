@@ -13,6 +13,7 @@ class MongoCore:
             cls._instance = super(MongoCore, cls).__new__(cls)
             cls._instance.client = None
             cls._instance.db = None
+            cls._instance.logs_db = None
         return cls._instance
 
     async def _connect(self):
@@ -23,13 +24,15 @@ class MongoCore:
                         mongo_host = os.getenv("MONGO_HOST")
                         mongo_port = os.getenv("MONGO_PORT")
                         mongo_db = os.getenv("MONGO_DB")
+                        mongo_logs_db = os.getenv("MONGO_LOGS_DB")
 
-                        if not all([mongo_host, mongo_port, mongo_db]):
+                        if not all([mongo_host, mongo_port, mongo_db, mongo_logs_db]):
                             raise ValueError("MongoDB environment variables are not set.")
 
                         mongo_uri = f"mongodb://{mongo_host}:{mongo_port}"
                         self.client = AsyncIOMotorClient(mongo_uri)
                         self.db = self.client[mongo_db]
+                        self.logs_db = self.client[mongo_logs_db]
 
                     except (ValueError, PyMongoError) as e:
                         print(f"MongoDB connection error: {e}")
@@ -38,6 +41,11 @@ class MongoCore:
         if self.client is None:
             await self._connect()
         return self.db
+
+    async def get_logs_database(self):
+        if self.client is None:
+            await self._connect()
+        return self.logs_db
     
 async def mongo_find_one(collection, query):
     try:
@@ -48,10 +56,13 @@ async def mongo_find_one(collection, query):
     except PyMongoError as e:
         print(f"Error finding one document in {collection}: {e}")
 
-async def mongo_insert_one(collection, document):
+async def mongo_insert_one(collection, document, is_log=False):
     try:
         mongo = MongoCore()
-        db = await mongo.get_database()
+        if is_log:
+            db = await mongo.get_logs_database()
+        else:
+            db = await mongo.get_database()
         result = await db[collection].insert_one(document)
         return result
     except PyMongoError as e:
