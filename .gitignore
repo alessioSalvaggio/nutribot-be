@@ -134,4 +134,7 @@ dmypy.json
 *.db
 
 # Large data
-data*
+large_data_folder*
+
+# IDE
+.vscode
