@@ -2,7 +2,7 @@ from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.responses import JSONResponse
-from app.core.mongo_logging import log_to_mongo
+from hypaz_core.mongo_logging import log_to_mongo
 import traceback
 import httpx
 import os

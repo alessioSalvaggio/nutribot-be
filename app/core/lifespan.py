@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from app.core.mongo_core import MongoCore
+from hypaz_core.mongo_core import MongoCore
 
 mongo = MongoCore()
 

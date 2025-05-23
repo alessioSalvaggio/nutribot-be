@@ -18,11 +18,13 @@ async def auth_middleware(request: Request, call_next):
         if jwt_token:
             if jwt_token == os.getenv("OVERRIDE_API_AUTH_TOKEN"):
                 request.state.user_id = "OVERRIDE_USER"
+                request.state.email = "alessio.salvaggio@outlook.com"
                 return await call_next(request)
             else:
                 try:
                     decoded_token = auth.verify_id_token(jwt_token)
                     request.state.user_id = decoded_token["uid"]
+                    request.state.email = decoded_token["email"]
                 except Exception:
                     raise HTTPException(status_code=401, detail="Invalid authentication credentials")
         else:

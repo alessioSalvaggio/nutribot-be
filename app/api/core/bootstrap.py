@@ -1,7 +1,7 @@
 import os
 import firebase_admin
 from firebase_admin import credentials
-from app.core.mongo_core import MongoCore
+from hypaz_core.mongo_core import MongoCore
 
 def init_services():
     mongo = MongoCore()

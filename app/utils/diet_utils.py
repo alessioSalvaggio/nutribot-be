@@ -5,8 +5,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 from openai import AsyncOpenAI
 import os
 import asyncio
-from app.core.mongo_core import mongo_find_one, mongo_update_one, mongo_insert_one
-from app.config.generic_conf import DIET_AI_MODEL
+from hypaz_core.communication_utils import send_multi_email
+from hypaz_core.mongo_core import mongo_find_one, mongo_update_one, mongo_insert_one
+from app.config.generic_conf import DIET_AI_MODEL, BASE_PATH_DIET_FILE, DIET_FILE_PREFIX, DIET_FILE_EXTENSION, BACKUP_REFERENCE_EMAIL_ACCOUNT
 from datetime import datetime, timezone
 from bson import ObjectId
 import json
@@ -250,7 +251,7 @@ async def step_5_esporta_menu(menu_output, formato="json"):
     
     return response.choices[0].message.content
 
-async def make_diet(patient_id):
+async def make_diet(patient_id: str, user_id: str):
     # Fetch user data from MongoDB
     patient_data = await mongo_find_one("patients", {"_id": ObjectId(patient_id)})
     
@@ -281,6 +282,7 @@ async def make_diet(patient_id):
     # Insert the diet plan into the "diets" collection
     diet_document = {
         "patient_id": patient_id,
+        "nutrizionista": user_id,
         "patient_analysis": step1,
         "diet_boundaries": step2,
         "daily_schema": step3,
@@ -310,7 +312,7 @@ async def make_diet(patient_id):
         
     return diet_insert_result.inserted_id
 
-async def generate_diet_pdf(diet_id):
+async def generate_diet_pdf(diet_id: str):
     diet_data = await mongo_find_one("diets", {"_id": ObjectId(diet_id)})
 
     if not diet_data or 'diet_plan_json' not in diet_data:
@@ -327,13 +329,41 @@ async def generate_diet_pdf(diet_id):
     rendered_html = template.render(menu_settimanale=menu_settimanale)
 
     # 4. Esporta come PDF
-    output_path = f"/home/alessio/nutribot/data/diet_plan_{diet_id}.pdf"
+    output_path = f"{BASE_PATH_DIET_FILE}{DIET_FILE_PREFIX}{diet_id}{DIET_FILE_EXTENSION}"
     HTML(string=rendered_html).write_pdf(output_path)
-    print(f"PDF generated successfully at {output_path}")    
+    print(f"PDF generated successfully at {output_path}") 
+    
+async def send_diet_email(diet_id: str, nutritionist_email: str):
+    diet_file_path = f"{BASE_PATH_DIET_FILE}{DIET_FILE_PREFIX}{diet_id}{DIET_FILE_EXTENSION}"
+        
+    diet_data = await mongo_find_one("diets", {"_id": ObjectId(diet_id)})
+    pat_id = diet_data.get("patient_id")
+    
+    pat_data = await mongo_find_one("patients", {"_id": ObjectId(pat_id)}) 
+    pat_email = pat_data['personal_info']['email']
+    pat_name = pat_data['personal_info']['nome'] + " " + pat_data['personal_info']['cognome']   
+    
+    body = (
+            f"Ciao {pat_name},<br><br>"
+            "Il tuo nutrizionista ha appena finito di fare la tua dieta!<br>"
+            "La trovi in allegato! Per ogni domanda contatta pure il tuo nutrizionista.<br>"
+            "Grazie,<br>"
+            "Il team di NutriBot"
+        )
+    await send_multi_email(
+        [BACKUP_REFERENCE_EMAIL_ACCOUNT, nutritionist_email],
+        "Ecco la tua dieta personalizzata",
+        body,
+        attachment_path=diet_file_path
+    )
     
 if __name__ == "__main__":
-    patient_id = "67f66a543387c752d861e18a"
     loop = asyncio.get_event_loop()
-    diet_id = loop.run_until_complete(make_diet(patient_id))
-    if diet_id:
-        loop.run_until_complete(generate_diet_pdf(diet_id))
+
+    # patient_id = "67f66a543387c752d861e18a"
+    # diet_id = loop.run_until_complete(make_diet(patient_id))
+    # if diet_id:
+    #     loop.run_until_complete(generate_diet_pdf(diet_id))
+        
+    diet_id = '67f833e63872e328e7bff4dd'
+    loop.run_until_complete(send_diet_email(diet_id, "alessio.salv@gmail.com"))

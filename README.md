@@ -19,7 +19,6 @@ nutribot
 │   ├── core
 │   │   ├── __init__.py
 │   │   ├── config.py              # Configurazioni applicative
-│   │   ├── mongo_core.py          # Wrapper per accesso a MongoDB
 │   │   └── data_accessibility.py  # Controllo accesso ai dati
 │   ├── models
 │   │   └── __init__.py

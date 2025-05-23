@@ -4,8 +4,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 from dotenv import load_dotenv 
 load_dotenv(dotenv_path="/home/alessio/nutribot/.env")
 
-from app.core.mongo_core import mongo_find_many, mongo_update_one
-from app.core.mongo_logging import log_to_mongo 
+from hypaz_core.mongo_core import mongo_find_many, mongo_update_one
+from hypaz_core.mongo_logging import log_to_mongo 
 import asyncio
 from app.utils.connector_3d_look import get_measurement_widget_data
 from bson import ObjectId

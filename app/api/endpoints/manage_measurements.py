@@ -1,12 +1,16 @@
 from fastapi import APIRouter, HTTPException, Request
-from app.core.mongo_core import mongo_find_one
-from app.core.mongo_logging import log_to_mongo
+from hypaz_core.mongo_core import mongo_find_one
+from hypaz_core.mongo_logging import log_to_mongo
+from app.core.data_accessibility import has_access_to_measure
 
 router = APIRouter()
 
 @router.get("/{measureUUId}")
 async def get_single_measurement(measureUUId: str, request: Request):
     try:
+        if not await has_access_to_measure(request.state.user_id, measureUUId):
+            raise HTTPException(status_code=403, detail=f"Access denied for User {request.state.user_id} to Measurement {measureUUId}")
+        
         measurement_details = await mongo_find_one("measurements", {"UUID": measureUUId})
         if "gender" in measurement_details["result"]["state"]:
             gender = measurement_details["result"]["state"]["gender"]

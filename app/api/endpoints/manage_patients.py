@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Request
 from app.models import NewPatientProfile
-from app.core.communication_utils import send_multi_email
-from app.core.mongo_logging import log_to_mongo
-from app.core.mongo_core import mongo_insert_one, mongo_find_one, mongo_find_many, mongo_update_one
+from hypaz_core.communication_utils import send_multi_email
+from hypaz_core.mongo_logging import log_to_mongo
+from hypaz_core.mongo_core import mongo_insert_one, mongo_find_one, mongo_find_many, mongo_update_one
 from app.core.data_accessibility import has_access_to_user
 from app.utils.connector_3d_look import generate_new_measurement_widget
 from app.config.generic_conf import BACKUP_REFERENCE_EMAIL_ACCOUNT

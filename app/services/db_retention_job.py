@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path="/home/alessio/nutribot/.env")
 
 from datetime import datetime, timedelta
-from app.core.mongo_core import mongo_delete_many
-from app.core.mongo_logging import log_to_mongo
+from hypaz_core.mongo_core import mongo_delete_many
+from hypaz_core.mongo_logging import log_to_mongo
 from app.config.generic_conf import LOG_RETENTION_DAYS
 
 class DBRetentionJob:

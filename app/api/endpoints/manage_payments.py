@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request
 from stripe.api_resources.checkout import Session
-from app.core.mongo_logging import log_to_mongo
+from hypaz_core.mongo_logging import log_to_mongo
 import datetime
 from firebase_admin import firestore
 import stripe
